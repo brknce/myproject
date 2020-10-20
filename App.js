@@ -1,54 +1,40 @@
-import React from 'react';
-import MapView from 'react-native-maps';
-import { View } from 'react-native';
-import * as Location from 'expo-location';
-import * as Permissions from 'expo-permissions';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 
-export default class App extends React.Component {
-
-  state = {
-    location: null,
-    errorMessage: ""
-  }
-
-  componentDidMount() {
-    this._getLocation();
-  }
-
-  _getLocation = async () => {
-    const { status } = await Permissions.askAsync(Permissions.LOCATION);
-
-    if (status !== 'granted') {
-      console.log("PERMISSION NOT GRANTED!")
-
-      this.setState({
-        errorMessage: "PERMISSION NOT GRANTED"
-      })
-    }
-
-    let location = await Location.getCurrentPositionAsync();
-
-    this.setState({
-      location: {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.045,
-        longitudeDelta: 0.045,
-      },
-    });
-  };
-
-  render() {
-    return (
-      <View style={{ flex: 1 }}>
-        <MapView
-          initialRegion={this.state.location}
-          showsUserLocation={true}
-          showsCompass={true}
-          rotateEnabled={false}
-          style={{ flex: 1, zIndex: 0 }}
-        />
-      </View>
-    );
-  }
+const initialState = {
+  latitude: null,
+  longitude: null,
+  latitudeDelta: 0.0922,
+  longitudeDelta: 0.0421,
 }
+
+const App = () => {
+  const [currentPosition, setCurrentPosition] = useState(initialState)
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(position => {
+      const { longitude, latitude } = position.coords;
+      setCurrentPosition({
+        ...currentPosition,
+        latitude,
+        longitude,
+      })
+    },
+      error => alert(error.message),
+      { timeout: 20000, maximumAge: 1000 }
+    )
+  }, [])
+
+  return currentPosition.latitude ? (
+    <MapView
+      provider={PROVIDER_GOOGLE}
+      showsUserLocation = {true}
+      style = {{flex : 1}}
+      initialRegion={currentPosition}
+    />
+  ) : <ActivityIndicator style={{ flex: 1 }} animating size="large" />
+}
+
+
+export default App;
