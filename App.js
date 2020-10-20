@@ -1,21 +1,54 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import MapView from 'react-native-maps';
+import { View } from 'react-native';
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+export default class App extends React.Component {
+
+  state = {
+    location: null,
+    errorMessage: ""
+  }
+
+  componentDidMount() {
+    this._getLocation();
+  }
+
+  _getLocation = async () => {
+    const { status } = await Permissions.askAsync(Permissions.LOCATION);
+
+    if (status !== 'granted') {
+      console.log("PERMISSION NOT GRANTED!")
+
+      this.setState({
+        errorMessage: "PERMISSION NOT GRANTED"
+      })
+    }
+
+    let location = await Location.getCurrentPositionAsync();
+
+    this.setState({
+      location: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.045,
+        longitudeDelta: 0.045,
+      },
+    });
+  };
+
+  render() {
+    return (
+      <View style={{ flex: 1 }}>
+        <MapView
+          initialRegion={this.state.location}
+          showsUserLocation={true}
+          showsCompass={true}
+          rotateEnabled={false}
+          style={{ flex: 1, zIndex: 0 }}
+        />
+      </View>
+    );
+  }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
