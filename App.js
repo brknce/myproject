@@ -1,40 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { ActivityIndicator } from 'react-native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import * as React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-const initialState = {
-  latitude: null,
-  longitude: null,
-  latitudeDelta: 0.0922,
-  longitudeDelta: 0.0421,
+import Login from './screens/Login';
+import Signup from './screens/Signup';
+import Dashboard from './screens/Dashboard';
+
+const Stack = createStackNavigator();
+
+function MyStack() {
+  return (
+    <Stack.Navigator initialRouteName="Signup">
+      <Stack.Screen name="Signup" component={Signup} />
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Dashboard" component={Dashboard} />
+    </Stack.Navigator>
+  );
 }
 
-const App = () => {
-  const [currentPosition, setCurrentPosition] = useState(initialState)
-
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(position => {
-      const { longitude, latitude } = position.coords;
-      setCurrentPosition({
-        ...currentPosition,
-        latitude,
-        longitude,
-      })
-    },
-      error => alert(error.message),
-      { timeout: 20000, maximumAge: 1000 }
-    )
-  }, [])
-
-  return currentPosition.latitude ? (
-    <MapView
-      provider={PROVIDER_GOOGLE}
-      showsUserLocation = {true}
-      style = {{flex : 1}}
-      initialRegion={currentPosition}
-    />
-  ) : <ActivityIndicator style={{ flex: 1 }} animating size="large" />
+export default function App() {
+  return (
+    <NavigationContainer>
+      <MyStack />
+    </NavigationContainer>
+  );
 }
-
-
-export default App;
