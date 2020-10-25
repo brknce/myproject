@@ -22,7 +22,7 @@ export default class Signup extends Component {
                 userCredentials.user.updateProfile({
                     displayName: this.state.name
                 })
-                this.props.navigation.navigate('Dashboard')
+                this.props.navigation.navigate('Map')
             })
             .catch(error => this.setState({ errorMessage: error.message }));
     }
