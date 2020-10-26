@@ -22,6 +22,12 @@ export default class Signup extends Component {
                 userCredentials.user.updateProfile({
                     displayName: this.state.name
                 })
+                /*
+                firebase.database().ref('/users/123').set({
+                    name : this.state.name,
+                    email : this.state.email
+                })
+                */
                 this.props.navigation.navigate('Map')
             })
             .catch(error => this.setState({ errorMessage: error.message }));

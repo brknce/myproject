@@ -11,6 +11,7 @@ const initialState = {
   longitudeDelta: 0.0421,
 }
 
+
 const Map = () => {
   const [currentPosition, setCurrentPosition] = useState(initialState)
   const [showMarkers, setshowMarkers] = useState(true)
@@ -34,7 +35,7 @@ const Map = () => {
 
   //get markers
   useEffect(() => {
-    firebase.database().ref("parkings").once("value").then(function (snapshot) {
+    firebase.database().ref("markers").once("value").then(function (snapshot) {
       snapshot.forEach(function (childSnapshot) {
         var childData = childSnapshot.val();
         setMarkers(markers => [...markers, childData]);
