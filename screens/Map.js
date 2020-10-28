@@ -37,7 +37,6 @@ const Map = () => {
   const responseListener = useRef();
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
 
     // This listener is fired whenever a notification is received while the app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
@@ -55,7 +54,7 @@ const Map = () => {
     };
   }, []);
 
-  //get current position
+  //get current position and update database
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(position => {
       const { longitude, latitude } = position.coords;
@@ -68,18 +67,22 @@ const Map = () => {
       error => alert(error.message),
       { timeout: 20000, maximumAge: 1000 }
     )
-
+    let uid = firebase.auth().currentUser.uid;
+    firebase.database().ref("users/" + uid).update({
+      coordinate: currentPosition
+    })
   }, [])
 
   //get markers
   useEffect(() => {
-    firebase.database().ref("markers").once("value").then(function (snapshot) {
+    firebase.database().ref("users").once("value").then(function (snapshot) {
       snapshot.forEach(function (childSnapshot) {
         var childData = childSnapshot.val();
         setMarkers(markers => [...markers, childData]);
       })
     });
   }, [])
+
 
   return currentPosition.latitude ? (
     <View style={{ flex: 1 }}>
@@ -90,7 +93,7 @@ const Map = () => {
         initialRegion={currentPosition}
       >
         {showMarkers ? markers.map((marker, index) => (
-          <Marker key={index} coordinate={marker.coordinate} onPress={() => { setModalVisible(true); }}>
+          <Marker key={index} coordinate={marker.coordinate} onPress={() => { setExpoPushToken(marker.expoPushToken); setModalVisible(true); }}>
             <View style={{ backgroundColor: "red", padding: 10 }}>
               <Text>SF</Text>
             </View>
@@ -116,7 +119,7 @@ const Map = () => {
 
             <TouchableHighlight
               style={{ ...styles.openButton, backgroundColor: "#2196F3" }}
-              onPress={async () => { await sendPushNotification(expoPushToken, value); }}
+              onPress={async () => { setModalVisible(false); await sendPushNotification(expoPushToken, value); }}
             >
               <Text style={styles.textStyle}>Send Message</Text>
             </TouchableHighlight>
@@ -148,37 +151,6 @@ async function sendPushNotification(expoPushToken, value) {
     },
     body: JSON.stringify(message),
   });
-}
-
-async function registerForPushNotificationsAsync() {
-  let token;
-  if (Constants.isDevice) {
-    const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
-      return;
-    }
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log(token);
-  } else {
-    alert('Must use physical device for Push Notifications');
-  }
-
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  return token;
 }
 
 const styles = StyleSheet.create({

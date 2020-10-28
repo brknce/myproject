@@ -10,7 +10,7 @@ const Stack = createStackNavigator();
 
 function MyStack() {
   return (
-    <Stack.Navigator initialRouteName="Map">
+    <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Signup" component={Signup} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Map" component={Map} />

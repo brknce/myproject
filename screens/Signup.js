@@ -1,8 +1,9 @@
-// components/signup.js
-
 import React, { Component } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
 import firebase from '../database/firabaseDB';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import * as Permissions from 'expo-permissions';
 
 
 export default class Signup extends Component {
@@ -11,10 +12,42 @@ export default class Signup extends Component {
         name: "",
         email: "",
         password: "",
-        errorMessage: null
+        errorMessage: null,
+        expoPushToken: ""
     };
 
+    registerForPushNotificationsAsync = async () => {
+        if (Constants.isDevice) {
+            const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+            let finalStatus = existingStatus;
+            if (existingStatus !== 'granted') {
+                const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+                finalStatus = status;
+            }
+            if (finalStatus !== 'granted') {
+                alert('Failed to get push token for push notification!');
+                return;
+            }
+            const token = (await Notifications.getExpoPushTokenAsync()).data;
+            this.setState({expoPushToken : token})
+
+        } else {
+            alert('Must use physical device for Push Notifications');
+        }
+
+        if (Platform.OS === 'android') {
+            Notifications.setNotificationChannelAsync('default', {
+                name: 'default',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+            });
+        }
+    }
+
     handleSignup = () => {
+
+        this.registerForPushNotificationsAsync();
         firebase
             .auth()
             .createUserWithEmailAndPassword(this.state.email, this.state.password)
@@ -22,12 +55,11 @@ export default class Signup extends Component {
                 userCredentials.user.updateProfile({
                     displayName: this.state.name
                 })
-                /*
-                firebase.database().ref('/users/123').set({
-                    name : this.state.name,
-                    email : this.state.email
+                this.registerForPushNotificationsAsync();
+                let uid = firebase.auth().currentUser.uid;
+                firebase.database().ref("users").child(uid).update({
+                    expoPushToken : this.state.expoPushToken
                 })
-                */
                 this.props.navigation.navigate('Map')
             })
             .catch(error => this.setState({ errorMessage: error.message }));
